@@ -1,0 +1,47 @@
+services:
+  db:
+    image: postgres:16
+    container_name: padel_db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+    volumes:
+      - db_data:/var/lib/postgresql/data
+    networks:
+      - padel_network
+
+  backend:
+    build: ./backend
+    container_name: padel_api
+    restart: unless-stopped
+    depends_on:
+      - db
+    environment:
+      DATABASE_URL: postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}
+      PORT: 4000
+    expose:
+      - "4000"
+    networks:
+      - padel_network
+
+  frontend:
+    build: ./frontend
+    container_name: padel_front
+    restart: unless-stopped
+    depends_on:
+      - backend
+    expose:
+      - "3000"
+    networks:
+      - padel_network
+      - proxy
+
+volumes:
+  db_data:
+
+networks:
+  padel_network:
+  proxy:
+    external: true
